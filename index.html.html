@@ -1,0 +1,1808 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Party Games - Juegos Digitales v2.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #FF3B5C;
+            --secondary: #FFD93D;
+            --accent: #6BCF7F;
+            --purple: #A78BFA;
+            --dark: #1a1a2e;
+            --light: #f8f8ff;
+            --hot: #FF1744;
+        }
+
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            overscroll-behavior-y: contain;
+        }
+
+        .refresh-indicator {
+            position: fixed;
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
+            transition: top 0.3s ease;
+            z-index: 9999;
+        }
+
+        .refresh-indicator.pulling {
+            top: 20px;
+        }
+
+        .refresh-indicator svg {
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 20px;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            color: var(--light);
+            text-shadow: 4px 4px 0 rgba(0,0,0,0.2);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            color: rgba(255,255,255,0.9);
+            font-weight: 400;
+        }
+
+
+
+        .games-grid {
+            display: grid;
+            gap: 20px;
+            animation: fadeIn 1s ease-out 0.3s both;
+        }
+
+        .game-card {
+            background: white;
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+            transform: rotate(45deg);
+            transition: all 0.6s;
+        }
+
+        .game-card:hover::before {
+            left: 100%;
+        }
+
+        .game-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .game-icon {
+            font-size: 3.5em;
+            margin-bottom: 15px;
+        }
+
+        .game-title {
+            font-size: 1.8em;
+            color: var(--dark);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .game-description {
+            color: #666;
+            font-size: 1em;
+            line-height: 1.5;
+            font-weight: 400;
+        }
+
+        .setup-container {
+            background: white;
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: var(--dark);
+            margin-bottom: 20px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .mode-option {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .mode-option .mode-name {
+            font-weight: 700;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            color: var(--dark);
+        }
+
+        .mode-option.normal {
+            border-color: var(--accent);
+        }
+
+        .mode-option.hot {
+            border-color: var(--hot);
+        }
+
+        .mode-option.selected.normal {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .mode-option.selected.hot {
+            background: var(--hot);
+            border-color: var(--hot);
+        }
+
+        .mode-option.selected .mode-name {
+            color: white;
+        }
+
+        .player-section {
+            margin-top: 30px;
+        }
+
+        .player-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .player-input-group input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            font-size: 1.1em;
+            font-family: 'Fredoka', sans-serif;
+            transition: border-color 0.3s;
+        }
+
+        .player-input-group input:focus {
+            outline: none;
+            border-color: var(--purple);
+        }
+
+        .add-player-btn {
+            padding: 15px 25px;
+            background: var(--purple);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-family: 'Fredoka', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .add-player-btn:hover {
+            background: #9333ea;
+            transform: scale(1.05);
+        }
+
+        .players-list {
+            margin: 20px 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .player-item {
+            background: #f5f5f5;
+            padding: 12px 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .player-number {
+            background: var(--purple);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-right: 10px;
+        }
+
+        .remove-player {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Fredoka', sans-serif;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .remove-player:hover {
+            background: #e6304a;
+        }
+
+        .btn {
+            padding: 18px 20px;
+            border: none;
+            border-radius: 20px;
+            font-size: 1em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Fredoka', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            width: 100%;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #e6304a);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary), #f0c820);
+            color: var(--dark);
+            margin-top: 10px;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent), #5ab86d);
+            color: white;
+        }
+
+        .btn-purple {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-orange {
+            background: linear-gradient(135deg, #FF6B35, #F7931E);
+            color: white;
+        }
+
+        .btn-cyan {
+            background: linear-gradient(135deg, #00D4FF, #0099CC);
+            color: white;
+        }
+
+        .question-mode {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .navigation-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .navigation-buttons .btn {
+            font-size: 0.95em;
+            padding: 16px 18px;
+        }
+
+        .back-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            flex: 1;
+        }
+
+        .next-btn {
+            flex: 2;
+        }
+
+        .game-header {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .current-mode-badge {
+            display: inline-block;
+            padding: 10px 25px;
+            border-radius: 15px;
+            font-size: 1em;
+            font-weight: 700;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .current-mode-badge.normal {
+            background: rgba(107, 207, 127, 0.3);
+            color: white;
+        }
+
+        .current-mode-badge.hot {
+            background: rgba(255, 23, 68, 0.3);
+            color: white;
+        }
+
+        .card-display {
+            background: white;
+            border-radius: 25px;
+            padding: 40px 30px;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-display::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent), var(--purple));
+        }
+
+        .card-content {
+            font-size: 1.4em;
+            color: var(--dark);
+            line-height: 1.6;
+            font-weight: 600;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .card-type {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .type-verdad {
+            background: rgba(255, 59, 92, 0.15);
+            color: var(--primary);
+        }
+
+        .type-reto {
+            background: rgba(107, 207, 127, 0.15);
+            color: #2d8f40;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .action-buttons .btn {
+            width: auto;
+        }
+
+        .action-buttons .btn-full {
+            grid-column: 1 / -1;
+        }
+
+        .score-display {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 1.3em;
+            color: white;
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 15px;
+            font-weight: 600;
+        }
+
+        .question-for {
+            background: rgba(167, 139, 250, 0.15);
+            color: var(--purple);
+            padding: 10px 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .turn-indicator {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            font-weight: 700;
+            font-size: 1.1em;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .turn-indicator {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            font-weight: 700;
+            font-size: 1.1em;
+            text-align: center;
+            text-transform: capitalize;
+        }
+
+        .admin-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--purple), #8b5cf6);
+            border: none;
+            font-size: 1.8em;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            z-index: 1000;
+            color: white;
+            display: none;
+        }
+
+        .admin-button.show {
+            display: block;
+        }
+
+        .admin-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 25px;
+            padding: 30px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 2em;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s;
+        }
+
+        .close-modal:hover {
+            color: var(--primary);
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: 'Fredoka', sans-serif;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: var(--purple);
+            color: white;
+            border-color: var(--purple);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1em;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .questions-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .question-item {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            position: relative;
+            padding-right: 80px;
+        }
+
+        .question-item .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        .question-item .mode-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .mode-badge.normal {
+            background: rgba(107, 207, 127, 0.2);
+            color: #2d8f40;
+        }
+
+        .mode-badge.hot {
+            background: rgba(255, 23, 68, 0.2);
+            color: var(--hot);
+        }
+
+        .game-list-item {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+
+        .game-list-item .game-name {
+            font-weight: 700;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .game-list-item .game-desc {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .game-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        .icon-btn.edit {
+            background: var(--secondary);
+            color: var(--dark);
+        }
+
+        .min-players-note {
+            text-align: center;
+            color: #ff6b6b;
+            font-size: 0.95em;
+            margin-bottom: 15px;
+            font-weight: 600;
+            padding: 8px 15px;
+            background: rgba(255, 107, 107, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+        }
+
+        .min-players-note.hidden {
+            display: none;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- PANTALLA 1: SELECCIÓN DE JUEGO -->
+        <div id="screen-1" class="screen active">
+            <div class="header">
+                <h1>🎉 Party Games</h1>
+                <p>Elige tu juego favorito</p>
+            </div>
+
+            <div class="games-grid" id="games-grid">
+                <!-- Los juegos se cargarán dinámicamente aquí -->
+            </div>
+        </div>
+
+        <!-- PANTALLA 2: CONFIGURACIÓN (MODO + JUGADORES) -->
+        <div id="screen-2" class="screen">
+            <div class="header">
+                <h1 id="setup-game-title">Configuración</h1>
+            </div>
+
+            <div class="setup-container">
+                <div class="section-title">Elige el modo de juego</div>
+                
+                <div class="mode-selector">
+                    <div class="mode-option normal" onclick="selectMode('normal')">
+                        <div class="mode-name">Normal</div>
+                    </div>
+                    <div class="mode-option hot" onclick="selectMode('hot')">
+                        <div class="mode-name">Hot</div>
+                    </div>
+                </div>
+
+                <div class="player-section">
+                    <div class="section-title">Añadir Jugadores</div>
+                    <p class="min-players-note" id="min-players-note">Se requieren al menos 2 jugadores para comenzar</p>
+                    
+                    <div class="player-input-group">
+                        <input type="text" id="player-name-input" placeholder="Nombre del jugador" onkeypress="if(event.key==='Enter') addPlayer()" style="text-transform: capitalize;">
+                        <button class="add-player-btn" onclick="addPlayer()">➕</button>
+                    </div>
+
+                    <div class="players-list" id="players-list"></div>
+                </div>
+
+                <div class="navigation-buttons">
+                    <button class="btn back-btn" onclick="goToScreen(1)">← Atrás</button>
+                    <button class="btn btn-primary next-btn" onclick="startGame()">Comenzar Juego →</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-3" class="screen">
+            <div class="header">
+                <h1 id="game-title-play">Juego</h1>
+                <div class="current-mode-badge normal" id="current-mode-badge">Modo Normal</div>
+            </div>
+
+            <div id="score-display" class="score-display" style="display: none;"></div>
+            <div id="turn-indicator" class="turn-indicator" style="display: none;">Para: Jugador</div>
+
+            <div class="card-display">
+                <div class="question-for" id="question-for" style="display: none;">Para: Jugador</div>
+                <span class="card-type type-verdad" id="card-type" style="display: none;">Tipo</span>
+                <div class="card-content" id="card-content">Selecciona una opción para comenzar</div>
+            </div>
+            <div class="action-buttons" id="action-buttons">
+            </div>
+
+            <button class="btn btn-secondary" onclick="goToScreen(1)" style="margin-top: 20px;">🏠 Volver al Inicio</button>
+        </div>
+    </div>
+
+    <div class="refresh-indicator" id="refresh-indicator">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+        </svg>
+    </div>
+
+    <!-- Botón de Administración -->
+    <button class="admin-button show" id="admin-button" onclick="openAdmin()">⚙️</button>
+
+    <!-- Modal de Administración -->
+    <div id="admin-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Panel de Administración</h2>
+                <button class="close-modal" onclick="closeAdmin()">×</button>
+            </div>
+
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="switchTab('questions')">Preguntas</button>
+                <button class="tab-btn" onclick="switchTab('games')">Juegos</button>
+            </div>
+
+            <!-- Tab de Preguntas -->
+            <div id="questions-tab" class="tab-content active">
+                <div class="tab-buttons" style="margin-bottom: 25px;">
+                    <button class="tab-btn active" onclick="switchQuestionMode('individual')">Individual</button>
+                    <button class="tab-btn" onclick="switchQuestionMode('masiva')">Subida Masiva</button>
+                </div>
+
+                <!-- Modo Individual -->
+                <div id="individual-mode" class="question-mode">
+                    <div class="form-group">
+                        <label>Juego</label>
+                        <select id="question-game">
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tipo (solo para Verdad o Reto)</label>
+                        <select id="question-type">
+                            <option value="general">General</option>
+                            <option value="verdad">Verdad</option>
+                            <option value="reto">Reto</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Modo</label>
+                        <select id="question-mode">
+                            <option value="normal">Normal</option>
+                            <option value="hot">Hot</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Pregunta/Reto</label>
+                        <textarea id="question-text" placeholder="Escribe aquí tu pregunta o reto..."></textarea>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="addQuestion()">+ Añadir Pregunta</button>
+                </div>
+
+                <!-- Modo Masivo -->
+                <div id="masiva-mode" class="question-mode" style="display: none;">
+                    <div class="form-group">
+                        <label>Juego</label>
+                        <select id="question-game-mass">
+                            <!-- Se llenará dinámicamente -->
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tipo (solo para Verdad o Reto)</label>
+                        <select id="question-type-mass">
+                            <option value="general">General</option>
+                            <option value="verdad">Verdad</option>
+                            <option value="reto">Reto</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Modo</label>
+                        <select id="question-mode-mass">
+                            <option value="normal">Normal</option>
+                            <option value="hot">Hot</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Preguntas/Retos (una por línea)</label>
+                        <textarea id="questions-mass" placeholder="Pega aquí todas tus preguntas, una por línea:
+                        ¿Cuál es tu mayor secreto?
+                        ¿Alguna vez has mentido?
+                        ¿Cuál fue tu momento más vergonzoso?
+                        ..." style="min-height: 200px;"></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="addQuestionsMass()">+ Añadir Todas las Preguntas</button>
+                    <p style="margin-top: 10px; color: #666; font-size: 0.9em; text-align: center;">
+                        💡 Escribe o pega cada pregunta en una línea separada
+                    </p>
+                </div>
+
+                <div class="questions-list" id="admin-questions-list">
+                    <!-- Lista de preguntas -->
+                </div>
+            </div>
+
+            <!-- Tab de Juegos -->
+            <div id="games-tab" class="tab-content">
+                <div class="form-group">
+                    <label>Nombre del Juego</label>
+                    <input type="text" id="game-name" placeholder="Ej: Pica Pica">
+                </div>
+
+                <div class="form-group">
+                    <label>Icono (emoji)</label>
+                    <input type="text" id="game-icon" placeholder="Ej: 🎲" maxlength="2">
+                </div>
+
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea id="game-description" placeholder="Breve descripción del juego..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Color (hexadecimal)</label>
+                    <input type="text" id="game-color" placeholder="#FF5733" value="#FF5733">
+                </div>
+
+                <button class="btn btn-primary" onclick="addNewGame()">+ Crear Juego</button>
+
+                <h3 style="margin-top: 30px; margin-bottom: 15px;">Juegos Existentes</h3>
+                <div id="games-list">
+                    <!-- Lista de juegos -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let games = [];
+        let questions = {};
+        let currentGame = null;
+        let selectedMode = null; // null hasta que el usuario seleccione
+        let players = [];
+        let currentPlayerIndex = 0;
+        let scores = {};
+
+        // Cargar jugadores guardados al inicio
+        function loadSavedPlayers() {
+            const savedPlayers = localStorage.getItem('partyPlayers');
+            if (savedPlayers) {
+                players = JSON.parse(savedPlayers);
+                players.forEach(player => {
+                    scores[player] = 0;
+                });
+            }
+        }
+
+        // Guardar jugadores en localStorage
+        function savePlayers() {
+            localStorage.setItem('partyPlayers', JSON.stringify(players));
+        }
+
+        // Inicializar juegos por defecto
+        function initDefaultGames() {
+            const defaultGames = [
+                {
+                    id: 'verdad-reto',
+                    name: 'Verdad o Reto',
+                    icon: '🎯',
+                    description: 'El clásico juego de preguntas comprometedoras y desafíos divertidos',
+                    color: '#FF3B5C',
+                    hasTypes: true
+                },
+                {
+                    id: 'conoces',
+                    name: '¿Qué Tan Bien Me Conoces?',
+                    icon: '🧠',
+                    description: 'Descubre quién te conoce mejor con preguntas personalizadas',
+                    color: '#FFD93D',
+                    needsPlayers: true
+                },
+                {
+                    id: 'previate',
+                    name: 'Previate',
+                    icon: '🍺',
+                    description: 'Juego de "yo nunca nunca" para conocer los secretos de tus amigos',
+                    color: '#6BCF7F'
+                }
+            ];
+
+            const defaultQuestions = {
+                'verdad-reto': {
+                    normal: {
+                        verdad: [
+                            "¿Cuál es tu mayor secreto que nunca le has contado a nadie?",
+                            "¿Alguna vez has mentido para salir de una situación incómoda?",
+                            "¿Cuál fue tu momento más vergonzoso?",
+                            "¿Cuál es la cosa más tonta por la que has llorado?",
+                            "¿Cuál es tu mayor miedo irracional?"
+                        ],
+                        reto: [
+                            "Baila sin música durante 1 minuto",
+                            "Habla con acento extranjero durante las próximas 3 rondas",
+                            "Haz 20 flexiones",
+                            "Imita a alguien del grupo hasta que adivinen quién es",
+                            "Canta una canción elegida por el grupo"
+                        ]
+                    },
+                    hot: {
+                        verdad: [
+                            "¿Quién es la persona más atractiva en esta sala?",
+                            "¿Has tenido algún crush secreto con alguien aquí presente?",
+                            "¿Has espiado a alguien en redes sociales obsesivamente?",
+                            "¿Has stalkeado a tu ex en redes sociales recientemente?",
+                            "¿Cuál es la mentira más grande que has dicho?"
+                        ],
+                        reto: [
+                            "Envía un mensaje de texto a tu crush (el grupo decide qué decir)",
+                            "Deja que el grupo revise tus últimos 5 mensajes de WhatsApp",
+                            "Come algo combinado con algo raro (el grupo decide)",
+                            "Llama a un contacto aleatorio y canta 'cumpleaños feliz'",
+                            "Intercambia una prenda de ropa con alguien del grupo"
+                        ]
+                    }
+                },
+                'conoces': {
+                    normal: [
+                        "¿Cuál es mi color favorito?",
+                        "¿Cuál fue mi primera mascota?",
+                        "¿Cuál es mi comida favorita?",
+                        "¿Cuál es mi película preferida?",
+                        "¿En qué mes es mi cumpleaños?",
+                        "¿Qué carrera estudié/estudio?",
+                        "¿Cuál es mi serie favorita?",
+                        "¿Cuál es mi hobby favorito?"
+                    ],
+                    hot: [
+                        "¿Cuál es mi mayor miedo secreto?",
+                        "¿Qué me hace reír más en la intimidad?",
+                        "¿Cuál es mi recuerdo favorito de la infancia que nunca cuento?",
+                        "¿Qué me estresa más realmente?",
+                        "¿Cuál es mi mayor inseguridad?",
+                        "¿Qué talento secreto tengo que pocos conocen?",
+                        "¿Cuál es mi mayor logro del que nunca hablo?",
+                        "¿Qué me hace verdaderamente feliz?"
+                    ]
+                },
+                'previate': {
+                    normal: [
+                        "Yo nunca nunca he mentido sobre mi edad",
+                        "Yo nunca nunca me he escapado de casa",
+                        "Yo nunca nunca he fingido estar enfermo",
+                        "Yo nunca nunca he llorado viendo una película",
+                        "Yo nunca nunca he enviado un mensaje a la persona equivocada",
+                        "Yo nunca nunca he olvidado el cumpleaños de alguien importante",
+                        "Yo nunca nunca he cantado en la ducha"
+                    ],
+                    hot: [
+                        "Yo nunca nunca he espiado mensajes de otra persona",
+                        "Yo nunca nunca he mentido en una entrevista de trabajo",
+                        "Yo nunca nunca me he enamorado de alguien en menos de una semana",
+                        "Yo nunca nunca he acosado a alguien en redes sociales",
+                        "Yo nunca nunca he fingido entender algo que no entendía",
+                        "Yo nunca nunca he roto algo y culpado a otro",
+                        "Yo nunca nunca he guardado un secreto durante más de 5 años"
+                    ]
+                }
+            };
+
+            const savedGames = localStorage.getItem('partyGames');
+            const savedQuestions = localStorage.getItem('partyQuestions');
+
+            if (savedGames) {
+                games = JSON.parse(savedGames);
+            } else {
+                games = defaultGames;
+                localStorage.setItem('partyGames', JSON.stringify(games));
+            }
+
+            if (savedQuestions) {
+                questions = JSON.parse(savedQuestions);
+            } else {
+                questions = defaultQuestions;
+                localStorage.setItem('partyQuestions', JSON.stringify(questions));
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('partyGames', JSON.stringify(games));
+            localStorage.setItem('partyQuestions', JSON.stringify(questions));
+        }
+
+        function renderGames() {
+            const grid = document.getElementById('games-grid');
+            grid.innerHTML = games.map(game => `
+                <div class="game-card" onclick="selectGame('${game.id}')" style="border-left: 8px solid ${game.color}">
+                    <div class="game-icon">${game.icon}</div>
+                    <div class="game-title">${game.name}</div>
+                    <div class="game-description">${game.description}</div>
+                </div>
+            `).join('');
+        }
+
+        function selectGame(gameId) {
+            currentGame = games.find(g => g.id === gameId);
+            if (!currentGame) return;
+
+            document.getElementById('setup-game-title').textContent = currentGame.icon + ' ' + currentGame.name;
+            
+            // Resetear selección de modo
+            selectedMode = null;
+            document.querySelectorAll('.mode-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            // Cargar jugadores guardados y mostrar en la lista
+            loadSavedPlayers();
+            updatePlayersList();
+            updateMinPlayersNote();
+            
+            goToScreen(2);
+        }
+
+        function selectMode(mode) {
+            selectedMode = mode;
+            document.querySelectorAll('.mode-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            event.target.closest('.mode-option').classList.add('selected');
+        }
+
+        function addPlayer() {
+            const input = document.getElementById('player-name-input');
+            let name = input.value.trim();
+            
+            if (name) {
+                // Capitalizar primera letra
+                name = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+                
+                if (!players.includes(name)) {
+                    players.push(name);
+                    scores[name] = 0;
+                    savePlayers();
+                    updatePlayersList();
+                    updateMinPlayersNote();
+                    input.value = '';
+                }
+            }
+        }
+
+        function updatePlayersList() {
+            const list = document.getElementById('players-list');
+            list.innerHTML = players.map((player, index) => `
+                <div class="player-item">
+                    <div style="display: flex; align-items: center;">
+                        <div class="player-number">${index + 1}</div>
+                        <span>${player}</span>
+                    </div>
+                    <button class="remove-player" onclick="removePlayer('${player}')">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function updateMinPlayersNote() {
+            const note = document.getElementById('min-players-note');
+            if (players.length >= 2) {
+                note.classList.add('hidden');
+            } else {
+                note.classList.remove('hidden');
+            }
+        }
+
+        function removePlayer(name) {
+            players = players.filter(p => p !== name);
+            delete scores[name];
+            savePlayers();
+            updatePlayersList();
+            updateMinPlayersNote();
+        }
+
+        function startGame() {
+            // Validar que haya al menos 2 jugadores
+            if (players.length < 2) {
+                alert('Debes añadir al menos 2 jugadores para comenzar');
+                return;
+            }
+
+            // Validar que se haya seleccionado un modo
+            if (!selectedMode) {
+                alert('Debes seleccionar un modo (Normal o Hot) para comenzar');
+                return;
+            }
+
+            currentPlayerIndex = 0;
+            document.getElementById('game-title-play').textContent = currentGame.icon + ' ' + currentGame.name;
+            
+            const badge = document.getElementById('current-mode-badge');
+            badge.textContent = selectedMode === 'normal' ? 'Modo Normal' : 'Modo Hot';
+            badge.className = 'current-mode-badge ' + selectedMode;
+
+            // Resetear el contenido de la carta al mensaje inicial
+            document.getElementById('card-content').textContent = 'Selecciona una opción para comenzar';
+            document.getElementById('card-type').style.display = 'none';
+            document.getElementById('question-for').style.display = 'none';
+
+            setupGameInterface();
+            goToScreen(3);
+        }
+
+        function setupGameInterface() {
+            const actionsDiv = document.getElementById('action-buttons');
+            const turnIndicator = document.getElementById('turn-indicator');
+            const scoreDisplay = document.getElementById('score-display');
+            const questionFor = document.getElementById('question-for');
+            
+            // SIEMPRE ocultar el turn-indicator (no lo queremos)
+            turnIndicator.style.display = 'none';
+            
+            if (currentGame.hasTypes) {
+                // Verdad o Reto
+                actionsDiv.innerHTML = `
+                    <button class="btn btn-success" onclick="getCard('verdad'); nextTurn();">Verdad</button>
+                    <button class="btn btn-cyan" onclick="getCard('reto'); nextTurn();">Reto</button>
+                    <button class="btn btn-primary btn-full" onclick="getCard('random'); nextTurn();">🎲 Aleatorio</button>
+                `;
+                document.getElementById('card-type').style.display = 'none';
+                document.getElementById('card-content').textContent = 'Selecciona una opción para comenzar';
+                scoreDisplay.style.display = 'none';
+                questionFor.style.display = 'block'; // Mostrar "Para:" dentro de la carta
+                if (players.length > 0) {
+                    questionFor.textContent = `Para: ${players[currentPlayerIndex]}`;
+                }
+            } else if (currentGame.needsPlayers) {
+                // Juego ¿Qué Tan Bien Me Conoces?
+                actionsDiv.innerHTML = `
+                    <button class="btn btn-primary btn-full" onclick="nextQuestion()">🎲 Nueva Carta</button>
+                `;
+                questionFor.style.display = 'block'; 
+                scoreDisplay.style.display = 'none';
+                document.getElementById('card-content').textContent = 'Presiona "Nueva Carta" para comenzar';
+                if (players.length > 0) {
+                    questionFor.textContent = `Para: ${players[currentPlayerIndex]}`;
+                }
+            } else {
+                // Previate
+                actionsDiv.innerHTML = `
+                    <button class="btn btn-primary btn-full" onclick="getCard(); nextTurn();">🎲 Nueva Carta</button>
+                `;
+                document.getElementById('card-content').textContent = 'Presiona "Nueva Carta" para comenzar';
+                scoreDisplay.style.display = 'none';
+                questionFor.style.display = 'block'; 
+                if (players.length > 0) {
+                    questionFor.textContent = `Para: ${players[currentPlayerIndex]}`;
+                }
+            }
+        }
+
+        function updateTurnIndicator() {
+            if (players.length > 0) {
+                const currentPlayer = players[currentPlayerIndex];
+                document.getElementById('turn-indicator').textContent = `Para: ${currentPlayer}`;
+            }
+        }
+
+        function getCard(type) {
+            let content = '';
+            const gameQuestions = questions[currentGame.id];
+            
+            if (!gameQuestions || !gameQuestions[selectedMode]) {
+                document.getElementById('card-content').textContent = 'No hay preguntas disponibles para este modo. ¡Añade algunas en el panel de administración!';
+                return;
+            }
+
+            // Actualizar "Para:" con el jugador actual ANTES de mostrar la carta
+            if (players.length > 0) {
+                document.getElementById('question-for').textContent = `Para: ${players[currentPlayerIndex]}`;
+            }
+
+            if (currentGame.hasTypes) {
+                if (type === 'random') {
+                    type = Math.random() > 0.5 ? 'verdad' : 'reto';
+                }
+                
+                const questionsList = gameQuestions[selectedMode][type];
+                if (questionsList && questionsList.length > 0) {
+                    content = questionsList[Math.floor(Math.random() * questionsList.length)];
+                    document.getElementById('card-type').textContent = type === 'verdad' ? 'Verdad' : 'Reto';
+                    document.getElementById('card-type').className = 'card-type ' + (type === 'verdad' ? 'type-verdad' : 'type-reto');
+                    document.getElementById('card-type').style.display = 'inline-block';
+                } else {
+                    content = 'No hay preguntas de este tipo. ¡Añade algunas!';
+                }
+            } else {
+                const questionsList = gameQuestions[selectedMode];
+                if (questionsList && questionsList.length > 0) {
+                    content = questionsList[Math.floor(Math.random() * questionsList.length)];
+                } else {
+                    content = 'No hay preguntas disponibles. ¡Añade algunas en el panel de administración!';
+                }
+            }
+            
+            document.getElementById('card-content').textContent = content;
+        }
+        
+        function nextTurn() {
+            // Avanzar al siguiente turno (pero sin actualizar el "Para:" todavía)
+            if (players.length > 0) {
+                currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+            }
+        }
+
+        function nextQuestion() {
+            const gameQuestions = questions[currentGame.id];
+            if (!gameQuestions || !gameQuestions[selectedMode] || gameQuestions[selectedMode].length === 0) {
+                document.getElementById('card-content').textContent = 'No hay preguntas disponibles. ¡Añade algunas en el panel de administración!';
+                return;
+            }
+
+            // Actualizar "Para:" con el jugador actual ANTES de mostrar la pregunta
+            if (players.length > 0) {
+                document.getElementById('question-for').textContent = `Para: ${players[currentPlayerIndex]}`;
+            }
+
+            const questionsList = gameQuestions[selectedMode];
+            const question = questionsList[Math.floor(Math.random() * questionsList.length)];
+            
+            document.getElementById('card-content').textContent = question;
+            
+            // Ahora avanzar al siguiente jugador (para la PRÓXIMA vez que se llame)
+            if (players.length > 0) {
+                currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+            }
+        }
+
+        function scoreAnswer(correct) {
+            if (correct) {
+                const currentPlayer = players[currentPlayerIndex];
+                scores[currentPlayer]++;
+            }
+            updateScoreDisplay();
+        }
+
+        function updateScoreDisplay() {
+            const scoreText = players.map(p => `${p}: ${scores[p]}`).join(' | ');
+            document.getElementById('score-display').textContent = scoreText;
+        }
+
+        function goToScreen(screenNumber) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-' + screenNumber).classList.add('active');
+
+            // Mostrar/ocultar botón de admin
+            const adminButton = document.getElementById('admin-button');
+            if (screenNumber === 1) {
+                adminButton.classList.add('show');
+            } else {
+                adminButton.classList.remove('show');
+            }
+
+            if (screenNumber === 1) {
+                // Reset completo del juego pero manteniendo jugadores guardados
+                Object.keys(scores).forEach(key => scores[key] = 0);
+                currentPlayerIndex = 0;
+                selectedMode = null; // Resetear modo para que el usuario deba seleccionar de nuevo
+                document.getElementById('player-name-input').value = '';
+                
+                // Resetear contenido de la carta
+                document.getElementById('card-content').textContent = 'Selecciona una opción para comenzar';
+                document.getElementById('card-type').style.display = 'none';
+                document.getElementById('question-for').style.display = 'none';
+                document.getElementById('turn-indicator').style.display = 'none';
+                document.getElementById('score-display').style.display = 'none';
+            }
+        }
+
+        // Admin functions
+        function openAdmin() {
+            document.getElementById('admin-modal').classList.add('active');
+            updateAdminQuestionsList();
+            updateGamesList();
+            updateGameSelectors();
+        }
+
+        function closeAdmin() {
+            document.getElementById('admin-modal').classList.remove('active');
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tab + '-tab').classList.add('active');
+        }
+
+        function switchQuestionMode(mode) {
+            const buttons = document.querySelectorAll('#questions-tab .tab-buttons .tab-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (mode === 'individual') {
+                document.getElementById('individual-mode').style.display = 'block';
+                document.getElementById('masiva-mode').style.display = 'none';
+            } else {
+                document.getElementById('individual-mode').style.display = 'none';
+                document.getElementById('masiva-mode').style.display = 'block';
+            }
+        }
+
+        function updateGameSelectors() {
+            const select = document.getElementById('question-game');
+            const selectMass = document.getElementById('question-game-mass');
+            const options = games.map(game => 
+                `<option value="${game.id}">${game.name}</option>`
+            ).join('');
+            
+            select.innerHTML = options;
+            selectMass.innerHTML = options;
+        }
+
+        function addQuestion() {
+            const gameId = document.getElementById('question-game').value;
+            const type = document.getElementById('question-type').value;
+            const mode = document.getElementById('question-mode').value;
+            const text = document.getElementById('question-text').value.trim();
+            
+            if (!text) {
+                alert('Por favor escribe una pregunta');
+                return;
+            }
+
+            if (!questions[gameId]) {
+                questions[gameId] = { normal: [], hot: [] };
+            }
+
+            const game = games.find(g => g.id === gameId);
+            
+            if (game && game.hasTypes) {
+                if (!questions[gameId][mode]) {
+                    questions[gameId][mode] = { verdad: [], reto: [] };
+                }
+                if (type === 'verdad' || type === 'reto') {
+                    if (!questions[gameId][mode][type]) {
+                        questions[gameId][mode][type] = [];
+                    }
+                    questions[gameId][mode][type].push(text);
+                }
+            } else {
+                if (!Array.isArray(questions[gameId][mode])) {
+                    questions[gameId][mode] = [];
+                }
+                questions[gameId][mode].push(text);
+            }
+            
+            saveData();
+            document.getElementById('question-text').value = '';
+            updateAdminQuestionsList();
+            alert('¡Pregunta añadida exitosamente!');
+        }
+
+        function addQuestionsMass() {
+            const gameId = document.getElementById('question-game-mass').value;
+            const type = document.getElementById('question-type-mass').value;
+            const mode = document.getElementById('question-mode-mass').value;
+            const text = document.getElementById('questions-mass').value.trim();
+            
+            if (!text) {
+                alert('Por favor escribe al menos una pregunta');
+                return;
+            }
+
+            // Dividir por líneas y filtrar líneas vacías
+            const questionsList = text.split('\n')
+                .map(q => q.trim())
+                .filter(q => q.length > 0);
+
+            if (questionsList.length === 0) {
+                alert('No se encontraron preguntas válidas');
+                return;
+            }
+
+            if (!questions[gameId]) {
+                questions[gameId] = { normal: [], hot: [] };
+            }
+
+            const game = games.find(g => g.id === gameId);
+            let addedCount = 0;
+            
+            questionsList.forEach(question => {
+                if (game && game.hasTypes) {
+                    if (!questions[gameId][mode]) {
+                        questions[gameId][mode] = { verdad: [], reto: [] };
+                    }
+                    if (type === 'verdad' || type === 'reto') {
+                        if (!questions[gameId][mode][type]) {
+                            questions[gameId][mode][type] = [];
+                        }
+                        questions[gameId][mode][type].push(question);
+                        addedCount++;
+                    }
+                } else {
+                    if (!Array.isArray(questions[gameId][mode])) {
+                        questions[gameId][mode] = [];
+                    }
+                    questions[gameId][mode].push(question);
+                    addedCount++;
+                }
+            });
+            
+            saveData();
+            document.getElementById('questions-mass').value = '';
+            updateAdminQuestionsList();
+            alert(`¡${addedCount} preguntas añadidas exitosamente!`);
+        }
+
+        function updateAdminQuestionsList() {
+            const listDiv = document.getElementById('admin-questions-list');
+            let html = '';
+            
+            for (const gameId in questions) {
+                const game = games.find(g => g.id === gameId);
+                if (!game) continue;
+                
+                html += `<h3 style="margin-top: 20px;">${game.name}</h3>`;
+                
+                const gameQuestions = questions[gameId];
+                
+                for (const mode in gameQuestions) {
+                    const modeLabel = mode === 'normal' ? 'Normal' : 'Hot';
+                    
+                    if (game.hasTypes) {
+                        for (const type in gameQuestions[mode]) {
+                            html += `<h4>${modeLabel} - ${type === 'verdad' ? 'Verdad' : 'Reto'}</h4>`;
+                            gameQuestions[mode][type].forEach((q, index) => {
+                                html += `
+                                    <div class="question-item">
+                                        <span class="mode-badge ${mode}">${modeLabel}</span>
+                                        <p>${q}</p>
+                                        <button class="delete-btn" onclick="deleteQuestion('${gameId}', '${mode}', '${type}', ${index})">Eliminar</button>
+                                    </div>
+                                `;
+                            });
+                        }
+                    } else {
+                        html += `<h4>${modeLabel}</h4>`;
+                        if (Array.isArray(gameQuestions[mode])) {
+                            gameQuestions[mode].forEach((q, index) => {
+                                html += `
+                                    <div class="question-item">
+                                        <span class="mode-badge ${mode}">${modeLabel}</span>
+                                        <p>${q}</p>
+                                        <button class="delete-btn" onclick="deleteQuestion('${gameId}', '${mode}', null, ${index})">Eliminar</button>
+                                    </div>
+                                `;
+                            });
+                        }
+                    }
+                }
+            }
+            
+            listDiv.innerHTML = html || '<p style="text-align: center; color: #999;">No hay preguntas personalizadas todavía</p>';
+        }
+
+        function deleteQuestion(gameId, mode, type, index) {
+            if (!confirm('¿Eliminar esta pregunta?')) return;
+            
+            if (type) {
+                questions[gameId][mode][type].splice(index, 1);
+            } else {
+                questions[gameId][mode].splice(index, 1);
+            }
+            
+            saveData();
+            updateAdminQuestionsList();
+        }
+
+        function addNewGame() {
+            const name = document.getElementById('game-name').value.trim();
+            const icon = document.getElementById('game-icon').value.trim();
+            const description = document.getElementById('game-description').value.trim();
+            const color = document.getElementById('game-color').value.trim();
+            
+            if (!name || !icon || !description) {
+                alert('Por favor completa todos los campos');
+                return;
+            }
+            
+            const id = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            
+            if (games.find(g => g.id === id)) {
+                alert('Ya existe un juego con ese nombre');
+                return;
+            }
+            
+            games.push({
+                id: id,
+                name: name,
+                icon: icon,
+                description: description,
+                color: color
+            });
+            
+            questions[id] = { normal: [], hot: [] };
+            
+            saveData();
+            renderGames();
+            updateGamesList();
+            updateGameSelectors();
+            
+            document.getElementById('game-name').value = '';
+            document.getElementById('game-icon').value = '';
+            document.getElementById('game-description').value = '';
+            document.getElementById('game-color').value = '#FF5733';
+            
+            alert('¡Juego creado exitosamente!');
+        }
+
+        function updateGamesList() {
+            const listDiv = document.getElementById('games-list');
+            listDiv.innerHTML = games.map(game => `
+                <div class="game-list-item">
+                    <div class="game-info">
+                        <div class="game-name">${game.icon} ${game.name}</div>
+                        <div class="game-desc">${game.description}</div>
+                    </div>
+                    <div class="game-actions">
+                        ${!game.needsPlayers && !game.hasTypes ? `<button class="icon-btn" onclick="deleteGame('${game.id}')">🗑️</button>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function deleteGame(gameId) {
+            if (!confirm('¿Eliminar este juego y todas sus preguntas?')) return;
+            
+            games = games.filter(g => g.id !== gameId);
+            delete questions[gameId];
+            
+            saveData();
+            renderGames();
+            updateGamesList();
+            updateGameSelectors();
+        }
+
+        // Inicializar
+        window.onload = function() {
+            initDefaultGames();
+            renderGames();
+            loadSavedPlayers(); // Cargar jugadores guardados al inicio
+            setupMobileBackButton();
+            setupPullToRefresh();
+        };
+
+        // Funcionalidad del botón atrás del móvil
+        function setupMobileBackButton() {
+            let screenHistory = [1];
+            
+            // Interceptar navegación hacia atrás
+            window.addEventListener('popstate', (event) => {
+                event.preventDefault();
+                
+                // Obtener pantalla actual
+                const activeScreen = document.querySelector('.screen.active');
+                const currentScreenNum = activeScreen ? parseInt(activeScreen.id.replace('screen-', '')) : 1;
+                
+                if (currentScreenNum === 3) {
+                    // Desde juego volver al inicio
+                    goToScreen(1);
+                } else if (currentScreenNum === 2) {
+                    // Desde configuración volver al inicio
+                    goToScreen(1);
+                } else {
+                    // En pantalla 1, no hacer nada
+                }
+                
+                // Mantener el estado en el historial
+                history.pushState(null, '', location.href);
+            });
+            
+            // Agregar estado inicial
+            history.pushState(null, '', location.href);
+        }
+
+        // Funcionalidad de Pull to Refresh
+        function setupPullToRefresh() {
+            let startY = 0;
+            let pulling = false;
+            const indicator = document.getElementById('refresh-indicator');
+            const threshold = 80;
+
+            document.addEventListener('touchstart', (e) => {
+                if (window.scrollY === 0) {
+                    startY = e.touches[0].pageY;
+                    pulling = true;
+                }
+            });
+
+            document.addEventListener('touchmove', (e) => {
+                if (!pulling) return;
+
+                const currentY = e.touches[0].pageY;
+                const distance = currentY - startY;
+
+                if (distance > 20 && distance < threshold) {
+                    indicator.classList.add('pulling');
+                }
+            });
+
+            document.addEventListener('touchend', (e) => {
+                if (!pulling) return;
+
+                const endY = e.changedTouches[0].pageY;
+                const distance = endY - startY;
+
+                if (distance > threshold) {
+                    // Refrescar la página
+                    indicator.style.top = '20px';
+                    setTimeout(() => {
+                        location.reload();
+                    }, 300);
+                } else {
+                    indicator.classList.remove('pulling');
+                }
+
+                pulling = false;
+            });
+        }
+    </script>
+</body>
+</html>
